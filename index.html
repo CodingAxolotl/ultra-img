@@ -1,69 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>AI Image App</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #fafafa; }
-        #status { margin: 20px; font-weight: bold; color: #666; }
-        img { max-width: 512px; border-radius: 12px; border: 5px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    </style>
-</head>
+<html>
 <body>
-
-    <h1>SDXL Turbo Generator</h1>
-    <div id="status">Initializing...</div>
+    <div id="status">Starting...</div>
     <div id="result"></div>
 
     <script type="module">
-        // Import Gradio Client from the official CDN
-        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+        import { Client } from "https://cdn.jsdelivr.net";
 
-        async function start() {
+        // This is a Base64 encoded 1x1 transparent pixel to test without fetching
+        const base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+        async function run() {
             const status = document.getElementById("status");
-            const resultDiv = document.getElementById("result");
-
             try {
-                // 1. Fetch the image using a reliable CORS proxy
-                status.innerText = "Fetching base image...";
-                const targetUrl = "https://raw.githubusercontent.com";
-                
-                // allOrigins handles the request and returns the data correctly for browsers
-                const proxyUrl = `https://api.allorigins.win{encodeURIComponent(targetUrl)}`;
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                // Convert the proxied string back into a Blob
-                const res = await fetch(data.contents);
+                // Convert the base64 string to a Blob that Gradio accepts
+                const res = await fetch(base64Image);
                 const imageBlob = await res.blob();
 
-                // 2. Connect to the AI API
-                status.innerText = "Connecting to AI Space...";
+                status.innerText = "Connecting to Gradio...";
                 const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
-
-                // 3. Send the image to the model
-                status.innerText = "Generating image... (wait ~5s)";
+                
+                status.innerText = "Generating...";
                 const result = await client.predict("/predict", { 
                     init_image: imageBlob, 		
-                    prompt: "A magical flying bus in the clouds, digital art", 		
+                    prompt: "A beautiful landscape", 		
                     strength: 0.5, 		
-                    steps: 2, 		
-                    seed: 42, 
+                    steps: 1, 		
+                    seed: 0, 
                 });
 
-                // 4. Display the result
-                const finalUrl = result.data.url;
-                resultDiv.innerHTML = `<img src="${finalUrl}" />`;
-                status.innerText = "Success!";
-
-            } catch (err) {
-                console.error(err);
-                status.innerText = "Error: " + err.message;
-                status.style.color = "red";
+                document.getElementById("result").innerHTML = `<img src="${result.data[0].url}">`;
+                status.innerText = "Done!";
+            } catch (e) {
+                status.innerText = "Error: " + e.message;
+                console.error(e);
             }
         }
-
-        start();
+        run();
     </script>
 </body>
 </html>
