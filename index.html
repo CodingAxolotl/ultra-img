@@ -2,78 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator</title>
+    <title>AI Image App</title>
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px; background: #f4f4f9; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 500px; }
-        #status { font-weight: bold; margin-bottom: 1rem; color: #555; }
-        #image-display img { max-width: 100%; border-radius: 8px; margin-top: 20px; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #fafafa; }
+        #status { margin: 20px; font-weight: bold; color: #666; }
+        img { max-width: 512px; border-radius: 12px; border: 5px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>SDXL-Turbo Demo</h2>
-    <div id="status">Starting process...</div>
-    <div id="image-display">
-        <!-- The generated image will appear here -->
-    </div>
-</div>
+    <h1>SDXL Turbo Generator</h1>
+    <div id="status">Initializing...</div>
+    <div id="result"></div>
 
-<script type="module">
-    // Import from official Gradio CDN
-    import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+    <script type="module">
+        // Import Gradio Client from the official CDN
+        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
-    async function runAIGenerator() {
-        const statusEl = document.getElementById('status');
-        const displayEl = document.getElementById('image-display');
+        async function start() {
+            const status = document.getElementById("status");
+            const resultDiv = document.getElementById("result");
 
-        try {
-            statusEl.innerHTML = '<div class="spinner"></div><br>Fetching base image...';
-            
-            // Bypass CORS using a proxy for the GitHub image
-            const proxy = "https://corsproxy.io?";
-            const imageUrl = "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png";
-            
-            const imgResponse = await fetch(proxy + encodeURIComponent(imageUrl));
-            if (!imgResponse.ok) throw new Error("Image fetch failed");
-            const exampleImage = await imgResponse.blob();
+            try {
+                // 1. Fetch the image using a reliable CORS proxy
+                status.innerText = "Fetching base image...";
+                const targetUrl = "https://raw.githubusercontent.com";
+                
+                // allOrigins handles the request and returns the data correctly for browsers
+                const proxyUrl = `https://api.allorigins.win{encodeURIComponent(targetUrl)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                // Convert the proxied string back into a Blob
+                const res = await fetch(data.contents);
+                const imageBlob = await res.blob();
 
-            statusEl.innerHTML = '<div class="spinner"></div><br>Connecting to AI Model...';
-            
-            // Connect to the specific Gradio space
-            const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
+                // 2. Connect to the AI API
+                status.innerText = "Connecting to AI Space...";
+                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
 
-            statusEl.innerHTML = '<div class="spinner"></div><br>Generating new image...';
+                // 3. Send the image to the model
+                status.innerText = "Generating image... (wait ~5s)";
+                const result = await client.predict("/predict", { 
+                    init_image: imageBlob, 		
+                    prompt: "A magical flying bus in the clouds, digital art", 		
+                    strength: 0.5, 		
+                    steps: 2, 		
+                    seed: 42, 
+                });
 
-            // Send prediction request
-            const result = await client.predict("/predict", { 
-                init_image: exampleImage, 		
-                prompt: "A neon cyberpunk city bus, highly detailed, 4k", 		
-                strength: 0.6, // Adjusted so you can see a significant change from the original bus image		
-                steps: 2, 		
-                seed: 42, 
-            });
+                // 4. Display the result
+                const finalUrl = result.data.url;
+                resultDiv.innerHTML = `<img src="${finalUrl}" />`;
+                status.innerText = "Success!";
 
-            // Handle the returned data (Gradio results are arrays)
-            const finalImageUrl = result.data[0].url;
-            
-            statusEl.innerText = "Generation Successful!";
-            displayEl.innerHTML = `<img src="${finalImageUrl}" alt="Generated AI Image">`;
-
-        } catch (error) {
-            console.error(error);
-            statusEl.innerText = "Error: " + error.message;
-            statusEl.style.color = "red";
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Error: " + err.message;
+                status.style.color = "red";
+            }
         }
-    }
 
-    // Automatically trigger on page load
-    window.addEventListener('DOMContentLoaded', runAIGenerator);
-</script>
-
+        start();
+    </script>
 </body>
 </html>
