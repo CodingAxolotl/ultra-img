@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creeper AI Image Generator</title>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
+    input, button, label { margin: 10px 0; display: block; }
+    img { margin-top: 20px; max-width: 80%; border: 2px solid #ccc; border-radius: 10px; min-height: 200px; background: #ddd; }
+    .controls { max-width: 500px; margin: 0 auto; text-align: left; }
+    button { width: 100%; padding: 10px; cursor: pointer; background: #007bff; color: white; border: none; font-size: 16px; border-radius: 5px; }
+    button:disabled { background: #999; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<h1>Creeper AI Image Generator</h1>
+
+<div class="controls">
+    <label>Select an image:</label>
+    <input type="file" id="initImage" accept="image/*">
+
+    <label>Prompt:</label>
+    <input type="text" id="prompt" placeholder="Enter your prompt..." value="Hello!!">
+
+    <label>Strength: <span id="strengthVal">0.7</span></label>
+    <input type="range" id="strength" min="0" max="1" step="0.01" value="0.7">
+
+    <label>Steps: <span id="stepsVal">2</span></label>
+    <input type="range" id="steps" min="1" max="50" step="1" value="2">
+
+    <label>Seed: <span id="seedVal">0</span></label>
+    <input type="number" id="seed" value="0">
+
+    <button id="generateBtn">Generate Image</button>
+</div>
+
+<img id="resultImage" alt="Generated Image will appear here">
+
+<script type="module">
+import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/client.mjs";
+
+const initImageInput = document.getElementById("initImage");
+const promptInput = document.getElementById("prompt");
+const strengthInput = document.getElementById("strength");
+const stepsInput = document.getElementById("steps");
+const seedInput = document.getElementById("seed");
+const generateBtn = document.getElementById("generateBtn");
+const resultImage = document.getElementById("resultImage");
+
+const strengthVal = document.getElementById("strengthVal");
+const stepsVal = document.getElementById("stepsVal");
+const seedVal = document.getElementById("seedVal");
+
+strengthInput.addEventListener("input", () => strengthVal.textContent = strengthInput.value);
+stepsInput.addEventListener("input", () => stepsVal.textContent = stepsInput.value);
+seedInput.addEventListener("input", () => seedVal.textContent = seedInput.value);
+
+generateBtn.addEventListener("click", async () => {
+    if (!initImageInput.files[0]) {
+        alert("Please select an image!");
+        return;
+    }
+
+    try {
+        generateBtn.disabled = true;
+        generateBtn.textContent = "Generating...";
+        resultImage.style.opacity = "0.5";
+
+        const file = initImageInput.files[0];
+        const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
+
+        const result = await client.predict("/predict", [
+            file,
+            promptInput.value,
+            parseFloat(strengthInput.value),
+            parseInt(stepsInput.value),
+            parseInt(seedInput.value),
+        ]);
+
+        if (result.data && result.data[0]) {
+            resultImage.src = result.data[0].url;
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Error generating image. Check console for details.");
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = "Generate Image";
+        resultImage.style.opacity = "1";
+    }
+});
+</script>
+</body>
+</html>
