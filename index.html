@@ -4,28 +4,15 @@
     <meta charset="UTF-8">
     <title>Gradio Image Generator</title>
     <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 50px;
-        }
-        img {
-            margin-top: 20px;
-            max-width: 500px;
-            border: 2px solid #333;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        img { margin-top: 20px; max-width: 500px; border: 2px solid #333; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
     <h1>Gradio Image Generator</h1>
     <button id="generateBtn">Generate Image</button>
+    <br>
     <img id="resultImage" src="" alt="Generated Image will appear here">
 
     <script type="module">
@@ -43,8 +30,8 @@
                 const response_0 = await fetch("https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png");
                 const exampleImage = await response_0.blob();
 
-                // Connect to the Gradio model
-                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
+                // Connect to Gradio model
+                const client = await Client.connect("https://gradio.app/g/diffusers/unofficial-SDXL-Turbo-i2i-t2i");
 
                 // Run prediction
                 const result = await client.predict("/predict", {
@@ -55,13 +42,17 @@
                     seed: 0
                 });
 
-                // Convert the output to a displayable URL
-                const generatedImage = result.data[0]; // Usually base64
-                resultImage.src = generatedImage;
+                // Check if the result is base64
+                if (typeof result.data[0] === "string" && result.data[0].startsWith("data:image")) {
+                    resultImage.src = result.data[0];
+                } else {
+                    console.log(result.data);
+                    alert("Prediction returned, but format unknown. Check console.");
+                }
 
             } catch (err) {
                 console.error("Error generating image:", err);
-                alert("Failed to generate image. See console for details.");
+                alert("Failed to generate image. Check console.");
             } finally {
                 button.disabled = false;
                 button.textContent = "Generate Image";
