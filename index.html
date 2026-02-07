@@ -1,42 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gradio Image Prediction</title>
+</head>
 <body>
-    <div id="status">Starting...</div>
-    <div id="result"></div>
+    <h3>Gradio Output:</h3>
+    <div id="output-container">Processing...</div>
 
     <script type="module">
-        import { Client } from "https://cdn.jsdelivr.net";
+        // 1. Import from official CDN URL
+        import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
-        // This is a Base64 encoded 1x1 transparent pixel to test without fetching
-        const base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-
-        async function run() {
-            const status = document.getElementById("status");
+        async function runPrediction() {
             try {
-                // Convert the base64 string to a Blob that Gradio accepts
-                const res = await fetch(base64Image);
-                const imageBlob = await res.blob();
-
-                status.innerText = "Connecting to Gradio...";
-                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
+                // 2. Fetch the example image
+                const response_0 = await fetch("https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png");
+                const exampleImage = await response_0.blob();
                 
-                status.innerText = "Generating...";
+                // 3. Connect and predict
+                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
                 const result = await client.predict("/predict", { 
-                    init_image: imageBlob, 		
-                    prompt: "A beautiful landscape", 		
-                    strength: 0.5, 		
-                    steps: 1, 		
+                    init_image: handle_file(exampleImage), // Wrap blob with handle_file for compatibility
+                    prompt: "Hello!!", 
+                    strength: 0, 
+                    steps: 1, 
                     seed: 0, 
                 });
 
-                document.getElementById("result").innerHTML = `<img src="${result.data[0].url}">`;
-                status.innerText = "Done!";
-            } catch (e) {
-                status.innerText = "Error: " + e.message;
-                console.error(e);
+                // 4. Output the resulting image to the page
+                console.log(result.data);
+                const container = document.getElementById("output-container");
+                container.innerHTML = ""; // Clear status
+                
+                // Typically image results are in result.data[0] as a FileData object
+                const imgData = result.data[0];
+                const imgElement = document.createElement("img");
+                imgElement.src = imgData.url;
+                imgElement.style.maxWidth = "100%";
+                container.appendChild(imgElement);
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("output-container").innerText = "Error: " + error.message;
             }
         }
-        run();
+
+        runPrediction();
     </script>
 </body>
 </html>
