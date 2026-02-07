@@ -2,62 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gradio Image Generator</title>
+    <title>Gradio SDXL-Turbo App</title>
     <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-        img { margin-top: 20px; max-width: 500px; border: 2px solid #333; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #status { margin-bottom: 20px; color: #555; }
+        img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     </style>
-</head>
-<body>
-    <h1>Gradio Image Generator</h1>
-    <button id="generateBtn">Generate Image</button>
-    <br>
-    <img id="resultImage" src="" alt="Generated Image will appear here">
 
+    <!-- Import Gradio Client from the official CDN link -->
     <script type="module">
-        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client@latest/dist/gradio-client.min.js";
+        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
-        const button = document.getElementById("generateBtn");
-        const resultImage = document.getElementById("resultImage");
-
-        button.addEventListener("click", async () => {
-            button.disabled = true;
-            button.textContent = "Generating...";
+        async function generateOnLoad() {
+            const status = document.getElementById("status");
+            const container = document.getElementById("result-container");
 
             try {
-                // Load example image
-                const response_0 = await fetch("https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png");
+                status.innerText = "Connecting to API and fetching base image...";
+
+                // 1. Fetch the example image
+                const response_0 = await fetch("https://raw.githubusercontent.com");
                 const exampleImage = await response_0.blob();
+                
+                // 2. Connect to the Gradio Space
+                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
+                
+                status.innerText = "Generating image... please wait.";
 
-                // Connect to Gradio model
-                const client = await Client.connect("https://gradio.app/g/diffusers/unofficial-SDXL-Turbo-i2i-t2i");
-
-                // Run prediction
-                const result = await client.predict("/predict", {
-                    init_image: exampleImage,
-                    prompt: "Hello!!",
-                    strength: 0,
-                    steps: 1,
-                    seed: 0
+                // 3. Run prediction
+                const result = await client.predict("/predict", { 
+                    init_image: exampleImage, 		
+                    prompt: "Hello!!", 		
+                    strength: 0, 		
+                    steps: 1, 		
+                    seed: 0, 
                 });
 
-                // Check if the result is base64
-                if (typeof result.data[0] === "string" && result.data[0].startsWith("data:image")) {
-                    resultImage.src = result.data[0];
-                } else {
-                    console.log(result.data);
-                    alert("Prediction returned, but format unknown. Check console.");
-                }
+                // 4. Show the result
+                // result.data[0].url contains the link to the generated image file
+                const imageUrl = result.data[0].url;
+                const imgElement = document.createElement("img");
+                imgElement.src = imageUrl;
+                
+                container.appendChild(imgElement);
+                status.innerText = "Generation complete!";
 
-            } catch (err) {
-                console.error("Error generating image:", err);
-                alert("Failed to generate image. Check console.");
-            } finally {
-                button.disabled = false;
-                button.textContent = "Generate Image";
+            } catch (error) {
+                console.error(error);
+                status.innerText = "Error: " + error.message;
             }
-        });
+        }
+
+        // Run automatically when the script loads
+        generateOnLoad();
     </script>
+</head>
+<body>
+    <h1>SDXL-Turbo Image Generator</h1>
+    <p id="status">Initializing...</p>
+    <div id="result-container"></div>
 </body>
 </html>
