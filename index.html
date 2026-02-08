@@ -1,52 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Gradio Image Prediction</title>
+<meta charset="UTF-8">
+<title>Creeper AI Image Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: white;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.app {
+    width: 100%;
+    max-width: 900px;
+    padding: 24px;
+}
+
+h1 {
+    font-size: 2.3rem;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+p {
+    opacity: 0.8;
+    margin-top: 0;
+}
+
+textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    margin-top: 14px;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.control {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.control input {
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+.checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+button {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: black;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.status {
+    margin-top: 14px;
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+
+.output {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+img {
+    width: 75vw;
+    max-width: 720px;
+    border-radius: 14px;
+    display: none;
+}
+
+.seed {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+</style>
 </head>
+
 <body>
-    <h3>Gradio Output:</h3>
-    <div id="output-container">Processing...</div>
+<div class="app">
+    <h1>🎨 Creeper AI Image Generator</h1>
+    <p>Ultra-fast image generation powered by Z-Image-Turbo</p>
 
-    <script type="module">
-        // 1. Import from official CDN URL
-        import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+    <textarea id="prompt" placeholder="Describe the image you want to generate..."></textarea>
 
-        async function runPrediction() {
-            try {
-                // 2. Fetch the example image
-                const response_0 = await fetch("https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png");
-                const exampleImage = await response_0.blob();
-                
-                // 3. Connect and predict
-                const client = await Client.connect("diffusers/unofficial-SDXL-Turbo-i2i-t2i");
-                const result = await client.predict("/predict", { 
-                    init_image: handle_file(exampleImage), // Wrap blob with handle_file for compatibility
-                    prompt: "Hello!!", 
-                    strength: 0, 
-                    steps: 1, 
-                    seed: 0, 
-                });
+    <div class="controls">
+        <div class="control">
+            <label>Width</label>
+            <input id="width" type="number" value="1024" min="512" max="2048" step="64">
+        </div>
 
-                // 4. Output the resulting image to the page
-                console.log(result.data);
-                const container = document.getElementById("output-container");
-                container.innerHTML = ""; // Clear status
-                
-                // Typically image results are in result.data[0] as a FileData object
-                const imgData = result.data[0];
-                const imgElement = document.createElement("img");
-                imgElement.src = imgData.url;
-                imgElement.style.maxWidth = "100%";
-                container.appendChild(imgElement);
+        <div class="control">
+            <label>Height</label>
+            <input id="height" type="number" value="1024" min="512" max="2048" step="64">
+        </div>
 
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById("output-container").innerText = "Error: " + error.message;
-            }
-        }
+        <div class="control">
+            <label>Steps</label>
+            <input id="steps" type="number" value="9" min="1" max="20">
+        </div>
 
-        runPrediction();
-    </script>
+        <div class="control">
+            <label>Seed</label>
+            <input id="seedInput" type="number" value="42">
+        </div>
+
+        <div class="control checkbox">
+            <input id="randomSeed" type="checkbox" checked>
+            <label>Random seed</label>
+        </div>
+    </div>
+
+    <button id="generateBtn">🚀 Generate Image</button>
+
+    <div id="status" class="status"></div>
+
+    <div class="output">
+        <img id="resultImage" alt="Generated image">
+    </div>
+
+    <div id="seedUsed" class="seed"></div>
+
+    <footer>
+        Powered by Z-Image-Turbo • Free API via Hugging Face Spaces
+    </footer>
+</div>
+
+<script type="module">
+import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+const btn = document.getElementById("generateBtn");
+const status = document.getElementById("status");
+const img = document.getElementById("resultImage");
+const seedUsedText = document.getElementById("seedUsed");
+
+let client = null;
+
+async function connect() {
+    if (!client) {
+        status.textContent = "Connecting to GPU…";
+        client = await Client.connect("mrfakename/Z-Image-Turbo");
+    }
+    return client;
+}
+
+btn.onclick = async () => {
+    const prompt = document.getElementById("prompt").value.trim();
+    if (!prompt) {
+        status.textContent = "Please enter a prompt.";
+        return;
+    }
+
+    btn.disabled = true;
+    img.style.display = "none";
+    seedUsedText.textContent = "";
+    status.textContent = "Generating image… GPU working ⚡";
+
+    try {
+        const api = await connect();
+
+        const result = await api.predict("/generate_image", {
+            prompt: prompt,
+            width: Number(document.getElementById("width").value),
+            height: Number(document.getElementById("height").value),
+            num_inference_steps: Number(document.getElementById("steps").value),
+            seed: Number(document.getElementById("seedInput").value),
+            randomize_seed: document.getElementById("randomSeed").checked
+        });
+
+        const imageData = result.data[0];
+        const imageUrl = typeof imageData === "string" ? imageData : imageData.url;
+
+        img.src = imageUrl + "?t=" + Date.now();
+        img.style.display = "block";
+        seedUsedText.textContent = "Seed used: " + result.data[1];
+        status.textContent = "Done ✅";
+
+    } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Failed to generate image";
+    }
+
+    btn.disabled = false;
+};
+</script>
 </body>
 </html>
