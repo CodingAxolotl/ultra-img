@@ -163,9 +163,9 @@ footer {
         </div>
     </div>
 
-    <button id="generateBtn">🚀 Generate Image</button>
+    <button id="generateBtn" disabled>🚀 Generate Image</button>
 
-    <div id="status" class="status"></div>
+    <div id="status" class="status">Loading AI engine…</div>
 
     <div class="output">
         <img id="resultImage" alt="Generated image">
@@ -179,7 +179,20 @@ footer {
 </div>
 
 <script type="module">
-import { Client } from "./gradio.js";
+let Client = null;
+
+// Load & decode gradio64.txt on page load
+async function loadGradio() {
+    const res = await fetch("./gradio64.txt");
+    const base64 = await res.text();
+    const decoded = atob(base64);
+
+    const script = document.createElement("script");
+    script.textContent = decoded;
+    document.head.appendChild(script);
+
+    Client = window.gradio.Client;
+}
 
 const btn = document.getElementById("generateBtn");
 const status = document.getElementById("status");
@@ -187,6 +200,11 @@ const img = document.getElementById("resultImage");
 const seedUsedText = document.getElementById("seedUsed");
 
 let client = null;
+
+// Immediately load Gradio
+await loadGradio();
+status.textContent = "Ready 🚀";
+btn.disabled = false;
 
 async function connect() {
     if (!client) {
