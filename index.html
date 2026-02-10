@@ -2,257 +2,806 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Creeper AI Image Generator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>Creeper Image Gen</title>
 <style>
-body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: radial-gradient(circle at top, #0f172a, #020617);
-    color: white;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-}
+    :root {
+        --primary: #22c55e;
+        --primary-dark: #15803d;
+        --bg: #0f0f0f;
+        --panel: rgba(25, 25, 25, 0.95);
+        --text: #ffffff;
+        --border: #333;
+        --glass: rgba(255, 255, 255, 0.05);
+        
+        /* Burst Colors */
+        --burst-purple: #9333ea;
+        --burst-purple-dark: #7e22ce;
+    }
 
-.app {
-    width: 100%;
-    max-width: 900px;
-    padding: 24px;
-}
+    * { box-sizing: border-box; }
 
-h1 {
-    font-size: 2.3rem;
-    margin-bottom: 6px;
-    background: linear-gradient(135deg, #22c55e, #4ade80);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background-color: var(--bg);
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.15) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.1) 0px, transparent 50%);
+        color: var(--text);
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
 
-p {
-    opacity: 0.8;
-    margin-top: 0;
-}
+    /* --- Header & Navigation --- */
+    header {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 25px;
+        position: relative;
+    }
 
-textarea {
-    width: 100%;
-    min-height: 80px;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 12px;
-    border: none;
-    outline: none;
-    resize: vertical;
-    margin-top: 14px;
-}
+    h1 {
+        font-size: 2.5rem;
+        margin: 0 0 15px 0;
+        text-align: center;
+        background: linear-gradient(90deg, #fff, var(--primary), #fff);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shine 5s linear infinite;
+        text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    }
 
-.controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 14px;
-}
+    @keyframes shine { to { background-position: 200% center; } }
 
-.control {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.85rem;
-    opacity: 0.9;
-}
+    .nav-bar {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
 
-.control input {
-    margin-top: 4px;
-    padding: 8px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-}
+    .nav-btn {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .nav-btn:hover { background: var(--primary-dark); border-color: var(--primary); }
 
-.checkbox {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    margin-top: 22px;
-}
+    /* --- Credit System --- */
+    .credit-system {
+        width: 100%;
+        max-width: 800px;
+        margin-bottom: 30px;
+        background: #1a1a1a;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
 
-button {
-    width: 100%;
-    margin-top: 18px;
-    padding: 14px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: black;
-}
+    .credit-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
 
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+    .progress-track {
+        width: 100%;
+        height: 12px;
+        background: #333;
+        border-radius: 6px;
+        overflow: hidden;
+    }
 
-.status {
-    margin-top: 14px;
-    font-size: 0.95rem;
-    opacity: 0.85;
-}
+    .progress-bar {
+        height: 100%;
+        width: 50%; /* JS will update this */
+        background: var(--primary);
+        transition: width 0.3s ease, background 0.3s ease;
+        box-shadow: 0 0 10px var(--primary);
+    }
 
-.output {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
+    /* --- Main UI --- */
+    .container {
+        width: 100%;
+        max-width: 800px;
+        background: var(--panel);
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+    }
 
-img {
-    width: 75vw;
-    max-width: 720px;
-    border-radius: 14px;
-    display: none;
-}
+    /* Inputs */
+    .model-selector {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
 
-.seed {
-    margin-top: 8px;
-    font-size: 0.9rem;
-    opacity: 0.7;
-    text-align: center;
-}
+    select, input, textarea {
+        width: 100%;
+        background: #222;
+        border: 1px solid #444;
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: 0.2s;
+    }
+    
+    select:focus, input:focus, textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
 
-footer {
-    margin-top: 32px;
-    text-align: center;
-    font-size: 0.85rem;
-    opacity: 0.6;
-}
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+        margin-bottom: 20px;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    /* --- Generate Button with Burst Effect --- */
+    #generateBtn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: black;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #generateBtn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+    /* The Purple Burst State */
+    #generateBtn.burst-mode {
+        background: linear-gradient(135deg, var(--burst-purple), var(--burst-purple-dark)) !important;
+        color: white !important;
+        box-shadow: 0 0 25px rgba(147, 51, 234, 0.6);
+        transform: scale(0.98);
+    }
+
+    /* --- Output & Animation --- */
+    .result-container {
+        margin-top: 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 350px; /* Increased height for bigger bubble */
+        background: rgba(0,0,0,0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        padding: 20px;
+    }
+
+    #resultImg {
+        max-width: 100%;
+        border-radius: 8px;
+        display: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    }
+    
+    #resultImg:hover { transform: scale(1.01); }
+
+    /* --- THE MEGA BUBBLE LOADER --- */
+    .loader-wrapper {
+        display: none; /* Flex when active */
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .blob {
+        /* Size: 1.5x larger than before (~180px) */
+        width: 180px;
+        height: 180px;
+        
+        /* Shape: Morphing Border Radius (Liquid) */
+        border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+        
+        /* Silver Diagonal Strips Overlay */
+        background-image: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 15px,
+            rgba(255, 255, 255, 0.3) 15px,
+            rgba(255, 255, 255, 0.3) 30px
+        );
+        background-size: 200% 200%; /* Allows strip movement */
+
+        /* Base Color (Animated via background-color keyframes below) */
+        background-color: #9333ea; 
+
+        /* Animations */
+        animation: 
+            morph 8s ease-in-out infinite,      /* Shape changing */
+            colorCycle 40s linear infinite,     /* 10s per color x 4 colors */
+            stripMove 2s linear infinite;       /* Strips moving constantly */
+
+        box-shadow: inset 0 0 20px rgba(255,255,255,0.3), 0 0 30px rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    /* 1. Shape Morphing (Extended range for "approx 2cm" feel) */
+    @keyframes morph {
+        0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        50% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: scale(1.1); } /* Breath/Stretch */
+        100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    }
+
+    /* 2. Color Cycle: Purple -> Red -> Blue -> Green (10s each) */
+    @keyframes colorCycle {
+        0%, 100% { background-color: #9333ea; box-shadow: 0 0 30px #9333ea; } /* Purple */
+        25% { background-color: #ef4444; box-shadow: 0 0 30px #ef4444; } /* Red */
+        50% { background-color: #3b82f6; box-shadow: 0 0 30px #3b82f6; } /* Blue */
+        75% { background-color: #22c55e; box-shadow: 0 0 30px #22c55e; } /* Green */
+    }
+
+    /* 3. Silver Strip Movement */
+    @keyframes stripMove {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 100% 0%; }
+    }
+
+    .status-text {
+        font-size: 1rem;
+        color: #ddd;
+        font-weight: 500;
+        text-align: center;
+        letter-spacing: 1px;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+    #placeholderText { color: #555; font-style: italic; position: absolute; z-index: 0; }
+
+    /* --- Modals (History & Tips) --- */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+        background: #1a1a1a;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid var(--border);
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        color: #aaa;
+        font-size: 1.8rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    .close-modal:hover { color: #fff; }
+
+    /* History Grid */
+    .history-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+    }
+
+    .history-item {
+        position: relative;
+        cursor: pointer;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 1;
+        background: #000;
+        border: 2px solid transparent;
+        transition: 0.2s;
+    }
+
+    .history-item:hover { border-color: var(--primary); transform: scale(1.02); }
+
+    .history-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .history-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        font-size: 10px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #000;
+        background: rgba(255,255,255,0.9);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* Tips List */
+    .tips-list {
+        list-style: none;
+        padding: 0;
+    }
+    .tips-list li {
+        margin-bottom: 15px;
+        background: rgba(255,255,255,0.05);
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+    .tips-list strong { color: var(--primary); }
+
+    .hidden { display: none !important; }
 </style>
 </head>
-
 <body>
-<div class="app">
-    <h1>🎨 Creeper AI Image Generator</h1>
-    <p>Ultra-fast image generation powered by Z-Image-Turbo</p>
 
-    <textarea id="prompt" placeholder="Describe the image you want to generate..."></textarea>
-
-    <div class="controls">
-        <div class="control">
-            <label>Width</label>
-            <input id="width" type="number" value="1024" min="512" max="2048" step="64">
+    <header>
+        <h1>Creeper Image Gen</h1>
+        <div class="nav-bar">
+            <button class="nav-btn" id="tipsBtn">Tips 💡</button>
+            <button class="nav-btn" id="historyBtn">History 📂</button>
         </div>
+    </header>
 
-        <div class="control">
-            <label>Height</label>
-            <input id="height" type="number" value="1024" min="512" max="2048" step="64">
+    <div class="credit-system">
+        <div class="credit-info">
+            <span>Credits Available</span>
+            <span id="creditCount">-- / 10</span>
         </div>
-
-        <div class="control">
-            <label>Steps</label>
-            <input id="steps" type="number" value="9" min="1" max="20">
+        <div class="progress-track">
+            <div id="creditBar" class="progress-bar"></div>
         </div>
-
-        <div class="control">
-            <label>Seed</label>
-            <input id="seedInput" type="number" value="42">
-        </div>
-
-        <div class="control checkbox">
-            <input id="randomSeed" type="checkbox" checked>
-            <label>Random seed</label>
+        <div style="font-size: 0.75rem; color: #888; margin-top: 8px; text-align: right;">
+            Refills to 10 at the start of every hour (XX:00)
         </div>
     </div>
 
-    <button id="generateBtn" disabled>🚀 Generate Image</button>
+    <div class="container">
+        
+        <div class="model-selector">
+            <label for="modelSelect">Select Model</label>
+            <select id="modelSelect">
+                <option value="default">Default (Costs 1 Credit) - CryptoCreeper/image-pro</option>
+                <option value="pro">PRO (Free / Rate Limited) - Z-Image-Turbo</option>
+            </select>
+        </div>
 
-    <div id="status" class="status">Loading AI engine…</div>
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" placeholder="Describe your image..."></textarea>
 
-    <div class="output">
-        <img id="resultImage" alt="Generated image">
+        <div class="settings-grid">
+            <div>
+                <label>Width</label>
+                <select id="width">
+                    <option value="256">256px</option>
+                    <option value="480">480px</option>
+                    <option value="512" selected>512px</option>
+                    <option value="640">640px</option>
+                    <option value="768">768px</option>
+                    <option value="1024">1024px</option>
+                </select>
+            </div>
+            <div>
+                <label>Height</label>
+                <select id="height">
+                    <option value="256">256px</option>
+                    <option value="480">480px</option>
+                    <option value="512" selected>512px</option>
+                    <option value="640">640px</option>
+                    <option value="768">768px</option>
+                    <option value="1024">1024px</option>
+                </select>
+            </div>
+            <div>
+                <label>Steps</label>
+                <input type="number" id="steps" value="5" min="1" max="50">
+            </div>
+        </div>
+
+        <button id="generateBtn">Generate Image</button>
+
+        <div class="result-container">
+            <div id="loader" class="loader-wrapper">
+                <div class="blob"></div>
+                <div id="statusText" class="status-text">Generating...</div>
+            </div>
+
+            <p id="placeholderText">Image will appear here</p>
+
+            <img id="resultImg" alt="Generated Result">
+        </div>
     </div>
 
-    <div id="seedUsed" class="seed"></div>
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Recent History (Last 3)</h3>
+                <button class="close-modal" id="closeHistory">&times;</button>
+            </div>
+            <div id="historyGrid" class="history-grid">
+                </div>
+        </div>
+    </div>
 
-    <footer>
-        Powered by Z-Image-Turbo • Free API via Hugging Face Spaces
-    </footer>
-</div>
+    <div id="tipsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Generation Tips</h3>
+                <button class="close-modal" id="closeTips">&times;</button>
+            </div>
+            <ul class="tips-list">
+                <li><strong>1. Speed Optimization:</strong> The lower the resolution and steps, the faster the image will be generated. Start small (512x512) to test your prompt!</li>
+                <li><strong>2. Model Choice:</strong> The <strong>PRO</strong> model is very fast and professional. It is perfect for higher resolutions (1024px) and more steps.</li>
+            </ul>
+        </div>
+    </div>
 
 <script type="module">
-let Client = null;
+    // --- IMPORT GRADIO ---
+    import { Client } from "https://esm.sh/@gradio/client";
 
-// Load & decode gradio64.txt on page load
-async function loadGradio() {
-    const res = await fetch("./gradio64.txt");
-    const base64 = await res.text();
-    const decoded = atob(base64);
+    // --- STATE MANAGEMENT ---
+    const STATE = {
+        credits: 5,
+        history: [], 
+        lastVisit: Date.now()
+    };
 
-    const script = document.createElement("script");
-    script.textContent = decoded;
-    document.head.appendChild(script);
+    // --- DOM ELEMENTS ---
+    const els = {
+        creditCount: document.getElementById('creditCount'),
+        creditBar: document.getElementById('creditBar'),
+        prompt: document.getElementById('prompt'),
+        width: document.getElementById('width'),
+        height: document.getElementById('height'),
+        steps: document.getElementById('steps'),
+        model: document.getElementById('modelSelect'),
+        btn: document.getElementById('generateBtn'),
+        resultContainer: document.querySelector('.result-container'),
+        img: document.getElementById('resultImg'),
+        placeholder: document.getElementById('placeholderText'),
+        loader: document.getElementById('loader'),
+        statusText: document.getElementById('statusText'),
+        
+        // Modals
+        historyBtn: document.getElementById('historyBtn'),
+        historyModal: document.getElementById('historyModal'),
+        closeHistory: document.getElementById('closeHistory'),
+        historyGrid: document.getElementById('historyGrid'),
+        
+        tipsBtn: document.getElementById('tipsBtn'),
+        tipsModal: document.getElementById('tipsModal'),
+        closeTips: document.getElementById('closeTips')
+    };
 
-    Client = window.gradio.Client;
-}
+    // --- INITIALIZATION ---
+    function init() {
+        loadState();
+        checkCreditReset(); // Check immediately on load
+        updateUI();
+        renderHistory();
 
-const btn = document.getElementById("generateBtn");
-const status = document.getElementById("status");
-const img = document.getElementById("resultImage");
-const seedUsedText = document.getElementById("seedUsed");
-
-let client = null;
-
-// Immediately load Gradio
-await loadGradio();
-status.textContent = "Ready 🚀";
-btn.disabled = false;
-
-async function connect() {
-    if (!client) {
-        status.textContent = "Connecting to GPU…";
-        client = await Client.connect("mrfakename/Z-Image-Turbo");
+        // Periodic check in case user keeps tab open across the hour mark
+        setInterval(checkCreditReset, 5000); 
     }
-    return client;
-}
 
-btn.onclick = async () => {
-    const prompt = document.getElementById("prompt").value.trim();
-    if (!prompt) {
-        status.textContent = "Please enter a prompt.";
-        return;
+    // --- LOCAL STORAGE LOGIC ---
+    function loadState() {
+        const savedCredits = localStorage.getItem('creeper_credits');
+        if (savedCredits !== null) STATE.credits = parseInt(savedCredits);
+
+        const savedHistory = localStorage.getItem('creeper_history');
+        if (savedHistory) STATE.history = JSON.parse(savedHistory);
+
+        const savedSettings = localStorage.getItem('creeper_settings');
+        if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            els.prompt.value = parsed.prompt || "";
+            els.width.value = parsed.width || "512";
+            els.height.value = parsed.height || "512";
+            els.steps.value = parsed.steps || 5;
+            els.model.value = parsed.model || "default";
+        }
     }
 
-    btn.disabled = true;
-    img.style.display = "none";
-    seedUsedText.textContent = "";
-    status.textContent = "Generating image… GPU working ⚡";
+    function saveState() {
+        localStorage.setItem('creeper_credits', STATE.credits);
+        localStorage.setItem('creeper_history', JSON.stringify(STATE.history));
+        
+        const currentSettings = {
+            prompt: els.prompt.value,
+            width: els.width.value,
+            height: els.height.value,
+            steps: els.steps.value,
+            model: els.model.value
+        };
+        localStorage.setItem('creeper_settings', JSON.stringify(currentSettings));
+    }
 
-    try {
-        const api = await connect();
+    // --- CREDIT & TIME LOGIC ---
+    function checkCreditReset() {
+        const now = new Date();
+        // Generate a token for the current hour: "2023-10-27-14" (Year-Month-Day-Hour)
+        const currentHourToken = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+        const lastRefillToken = localStorage.getItem('creeper_last_refill');
 
-        const result = await api.predict("/generate_image", {
-            prompt: prompt,
-            width: Number(document.getElementById("width").value),
-            height: Number(document.getElementById("height").value),
-            num_inference_steps: Number(document.getElementById("steps").value),
-            seed: Number(document.getElementById("seedInput").value),
-            randomize_seed: document.getElementById("randomSeed").checked
+        // If the token in storage is different from current hour, it means we are in a new hour
+        if (lastRefillToken !== currentHourToken) {
+            console.log("New hour detected! Refilling credits.");
+            STATE.credits = 10;
+            localStorage.setItem('creeper_last_refill', currentHourToken);
+            saveState();
+            updateUI();
+        }
+        
+        // Update last visit just for housekeeping
+        STATE.lastVisit = Date.now();
+    }
+
+    function updateUI() {
+        // Update Credits
+        els.creditCount.textContent = `${STATE.credits} / 10`;
+        const percentage = (STATE.credits / 10) * 100;
+        els.creditBar.style.width = `${percentage}%`;
+
+        // Color Logic
+        if (STATE.credits > 6) els.creditBar.style.background = "var(--primary)";
+        else if (STATE.credits > 3) els.creditBar.style.background = "#fbbf24"; // Yellow
+        else els.creditBar.style.background = "#ef4444"; // Red
+    }
+
+    // --- GENERATION LOGIC ---
+    els.btn.addEventListener('click', async () => {
+        // Save inputs immediately
+        saveState();
+
+        const prompt = els.prompt.value.trim();
+        const width = parseInt(els.width.value);
+        const height = parseInt(els.height.value);
+        const steps = parseInt(els.steps.value);
+        const model = els.model.value;
+
+        if (!prompt) {
+            alert("⚠️ Please enter a prompt.");
+            return;
+        }
+
+        // Check Credits for Default Model
+        if (model === 'default') {
+            checkCreditReset(); // Double check before deducting
+            if (STATE.credits < 1) {
+                alert("❌ Not enough credits! Wait for the start of the next hour.");
+                return;
+            }
+        }
+
+        // --- TRIGGER BUTTON ANIMATION (PURPLE FLUID BURST) ---
+        els.btn.classList.add('burst-mode');
+        setTimeout(() => {
+            els.btn.classList.remove('burst-mode');
+        }, 3000); // Stays purple for exactly 3 seconds
+
+        // Start UI State
+        els.btn.disabled = true;
+        els.img.style.display = 'none';
+        els.placeholder.style.display = 'none'; // Hide text under bubble
+        els.loader.style.display = 'flex'; // Show Bubble
+        els.statusText.textContent = model === 'default' 
+            ? "Generating with Default (Cost: 1 Credit)..." 
+            : "Generating with PRO (Free)...";
+
+        try {
+            let resultBlob = null;
+
+            if (model === 'default') {
+                // Deduct Credit
+                STATE.credits -= 1;
+                saveState();
+                updateUI();
+
+                const client = await Client.connect("CryptoCreeper/image-pro");
+                const result = await client.predict("/generate_workflow", {
+                    prompt: prompt,
+                    width: width,
+                    height: height,
+                    steps: steps
+                });
+                const imgData = result.data[1];
+                resultBlob = await fetchImageAsBlob(imgData);
+
+            } else {
+                // PRO Model
+                const client = await Client.connect("mrfakename/Z-Image-Turbo");
+                const result = await client.predict("/generate_image", {
+                    prompt: prompt,
+                    width: width,
+                    height: height,
+                    num_inference_steps: steps,
+                    seed: Math.floor(Math.random() * 100000),
+                    randomize_seed: true
+                });
+                const imgData = result.data[0]; 
+                resultBlob = await fetchImageAsBlob(imgData);
+            }
+
+            // Success Handling
+            const objectURL = URL.createObjectURL(resultBlob);
+            els.img.src = objectURL;
+            
+            // UI Switch: Hide Bubble, Show Image
+            els.loader.style.display = 'none';
+            els.img.style.display = 'block';
+
+            // Save to History
+            const reader = new FileReader();
+            reader.readAsDataURL(resultBlob);
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                addToHistory(base64data, model);
+            };
+
+            // Setup Main Image Download
+            els.img.onclick = () => downloadImage(objectURL, `creeper-gen-${Date.now()}.png`);
+
+        } catch (error) {
+            console.error(error);
+            els.loader.style.display = 'none'; // Hide Bubble
+            els.placeholder.style.display = 'block'; // Show text again
+            els.placeholder.innerHTML = `<span style="color:#ef4444">❌ Error: ${error.message}</span>`;
+            
+            if (model === 'pro') {
+                alert("Sorry, you’ve reached your PRO limit for today. Try again tomorrow.");
+            }
+        } finally {
+            els.btn.disabled = false;
+        }
+    });
+
+    // --- HELPER FUNCTIONS ---
+
+    async function fetchImageAsBlob(imageRef) {
+        let url = "";
+        if (typeof imageRef === "string") url = imageRef;
+        else if (imageRef?.url) url = imageRef.url;
+        else if (imageRef?.path) url = imageRef.path;
+        
+        const response = await fetch(url);
+        return await response.blob();
+    }
+
+    function addToHistory(base64, model) {
+        STATE.history.unshift({
+            image: base64,
+            model: model,
+            date: Date.now()
         });
-
-        const imageData = result.data[0];
-        const imageUrl = typeof imageData === "string" ? imageData : imageData.url;
-
-        img.src = imageUrl + "?t=" + Date.now();
-        img.style.display = "block";
-        seedUsedText.textContent = "Seed used: " + result.data[1];
-        status.textContent = "Done ✅";
-
-    } catch (e) {
-        console.error(e);
-        status.textContent = "❌ Failed to generate image";
+        // Keep only last 3
+        if (STATE.history.length > 3) STATE.history = STATE.history.slice(0, 3);
+        saveState();
+        renderHistory();
     }
 
-    btn.disabled = false;
-};
+    function downloadImage(url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function renderHistory() {
+        const grid = els.historyGrid;
+        grid.innerHTML = "";
+        if (STATE.history.length === 0) {
+            grid.innerHTML = '<p style="color:#666; grid-column: 1/-1; text-align: center;">No history yet.</p>';
+            return;
+        }
+        STATE.history.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            
+            const img = document.createElement('img');
+            img.src = item.image;
+            
+            const badge = document.createElement('div');
+            badge.className = 'history-badge';
+            badge.style.background = item.model === 'default' ? 'var(--primary)' : '#3b82f6';
+            badge.textContent = item.model === 'default' ? 'DEF' : 'PRO';
+
+            div.onclick = () => downloadImage(item.image, `history-${index}-${item.date}.png`);
+
+            div.appendChild(img);
+            div.appendChild(badge);
+            grid.appendChild(div);
+        });
+    }
+
+    // --- MODAL LOGIC ---
+    function toggleModal(modal, show) { modal.style.display = show ? "flex" : "none"; }
+    
+    els.historyBtn.onclick = () => toggleModal(els.historyModal, true);
+    els.closeHistory.onclick = () => toggleModal(els.historyModal, false);
+    
+    els.tipsBtn.onclick = () => toggleModal(els.tipsModal, true);
+    els.closeTips.onclick = () => toggleModal(els.tipsModal, false);
+
+    window.onclick = (e) => {
+        if (e.target == els.historyModal) toggleModal(els.historyModal, false);
+        if (e.target == els.tipsModal) toggleModal(els.tipsModal, false);
+    };
+
+    // Run Init
+    init();
+
 </script>
 </body>
 </html>
