@@ -201,6 +201,32 @@
         margin-bottom: 20px;
     }
 
+    /* Slider Styling */
+    .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #222;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #444;
+    }
+    
+    input[type=range] {
+        flex: 1;
+        cursor: pointer;
+        padding: 0;
+        height: 6px;
+        accent-color: var(--primary);
+    }
+    
+    #stepsVal {
+        font-weight: bold;
+        color: var(--primary);
+        min-width: 25px;
+        text-align: center;
+    }
+
     /* Speed Selector (Only visible for Default) */
     #speedControl {
         display: block;
@@ -472,8 +498,6 @@
             <div>
                 <label>Width</label>
                 <select id="width">
-                    <option value="256">256px</option>
-                    <option value="480">480px</option>
                     <option value="512" selected>512px</option>
                     <option value="640">640px</option>
                     <option value="768">768px</option>
@@ -483,8 +507,6 @@
             <div>
                 <label>Height</label>
                 <select id="height">
-                    <option value="256">256px</option>
-                    <option value="480">480px</option>
                     <option value="512" selected>512px</option>
                     <option value="640">640px</option>
                     <option value="768">768px</option>
@@ -492,8 +514,11 @@
                 </select>
             </div>
             <div>
-                <label>Steps</label>
-                <input type="number" id="steps" value="5" min="1" max="50">
+                <label>Steps (4 - 12)</label>
+                <div class="slider-container">
+                    <input type="range" id="steps" value="5" min="4" max="12" step="1">
+                    <span id="stepsVal">5</span>
+                </div>
             </div>
         </div>
 
@@ -530,7 +555,7 @@
                 <button class="close-modal" id="closeTips">&times;</button>
             </div>
             <ul class="info-list">
-                <li><strong>1. Speed Optimization:</strong> The lower the resolution and steps, the faster the image will be generated. Start small (512x512).</li>
+                <li><strong>1. Speed Optimization:</strong> The lower the resolution and steps, the faster the image will be generated.</li>
                 <li><strong>2. Model Choice:</strong> PRO is free and fast but rate-limited. Default has high quality but costs credits.</li>
             </ul>
         </div>
@@ -543,9 +568,9 @@
                 <button class="close-modal" id="closeUpdates">&times;</button>
             </div>
             <ul class="info-list">
-                <li><strong>1. Dynamic Credit & Happy Hour:</strong> Max credits now change by day (Fri: 110, Sat: 120, Sun: 130). <strong>Happy Hour</strong> is Sunday 17:00-19:00 (Max 150 + FX)!</li>
-                <li><strong>2. Economy 2.0:</strong> Default model costs 10 credits. Paid option to remove watermarks for 10 credits.</li>
-                <li><strong>3. Flexible Pricing:</strong> Choose 'Slower' (5 credits) or 'Slowest' (2 credits) speeds to save money!</li>
+                <li><strong>1. Dynamic Credit Calendar:</strong> Max credits change daily (Fri: 110, Sat: 120, Sun: 130). <strong>Happy Hour</strong> is Sunday 17:00-19:00 (Max 150 + FX)!</li>
+                <li><strong>2. Speed Tiers (Save Credits):</strong> Choose 'Slower' (5 credits) or 'Slowest' (2 credits) to save money on the Default model.</li>
+                <li><strong>3. Watermark Control:</strong> Download with Watermark for free, or use 10 credits to remove it. (Now with smaller watermark size!).</li>
             </ul>
         </div>
     </div>
@@ -559,8 +584,8 @@
         maxCredits: 100,
         history: [], 
         lastVisit: Date.now(),
-        // Holds the raw blob of the CURRENT generated image (clean version)
-        currentRawBlob: null
+        // Holds the clean base64 of the CURRENT generated image
+        currentCleanBase64: null
     };
 
     // --- DOM ELEMENTS ---
@@ -572,6 +597,7 @@
         width: document.getElementById('width'),
         height: document.getElementById('height'),
         steps: document.getElementById('steps'),
+        stepsVal: document.getElementById('stepsVal'),
         model: document.getElementById('modelSelect'),
         speedControl: document.getElementById('speedControl'),
         speedSelect: document.getElementById('speedSelect'),
@@ -600,7 +626,7 @@
 
     // --- INITIALIZATION ---
     function init() {
-        calculateMaxCredits(); // Set initial max based on day/time
+        calculateMaxCredits(); 
         loadState();
         checkCreditReset();
         updateUI();
@@ -608,12 +634,18 @@
 
         // UI Event Listeners
         els.model.addEventListener('change', toggleSpeedControl);
-        toggleSpeedControl(); // Run on init
+        
+        // Steps Slider Listener
+        els.steps.addEventListener('input', (e) => {
+            els.stepsVal.textContent = e.target.value;
+        });
+
+        toggleSpeedControl(); 
 
         // Periodic Checks
         setInterval(checkCreditReset, 5000); 
-        setInterval(checkHappyHourEffects, 60000); // Check effects every minute
-        checkHappyHourEffects(); // Run immediately
+        setInterval(checkHappyHourEffects, 60000); 
+        checkHappyHourEffects(); 
     }
 
     // --- LOGIC: DATE & CREDITS ---
@@ -636,15 +668,12 @@
         }
 
         STATE.maxCredits = max;
-        
-        // Handle Sunday Snap-back at 19:00
-        // If it's Sunday 19:xx and credits > 130, we don't force reduce them immediately per logic,
-        // but max snaps back to 130.
     }
 
     function checkHappyHourEffects() {
         calculateMaxCredits();
         const now = new Date();
+        // Happy Hour Logic
         const isHappyHour = (now.getDay() === 0 && now.getHours() >= 17 && now.getHours() < 19);
 
         if (isHappyHour) {
@@ -664,7 +693,7 @@
         const lastRefillToken = localStorage.getItem('creeper_last_refill');
 
         if (lastRefillToken !== currentHourToken) {
-            console.log("New hour! Refilling to max: " + STATE.maxCredits);
+            console.log("New hour! Refilling.");
             STATE.credits = STATE.maxCredits;
             localStorage.setItem('creeper_last_refill', currentHourToken);
             saveState();
@@ -679,20 +708,17 @@
 
         const savedHistory = localStorage.getItem('creeper_history');
         if (savedHistory) STATE.history = JSON.parse(savedHistory);
-        
-        // Ensure credits don't exceed max on load (optional, but good practice, unless it's bonus overflow)
-        // logic says refill happens at XX:00, so valid credits stick.
     }
 
     function saveState() {
         localStorage.setItem('creeper_credits', STATE.credits);
+        // We only save the last 3 to prevent localstorage overflow
         localStorage.setItem('creeper_history', JSON.stringify(STATE.history));
     }
 
     // --- UI UPDATES ---
     function updateUI() {
         els.creditCount.textContent = `${STATE.credits} / ${STATE.maxCredits}`;
-        // Calculate percentage relative to current Max
         let percentage = (STATE.credits / STATE.maxCredits) * 100;
         if (percentage > 100) percentage = 100;
         
@@ -717,8 +743,6 @@
         const prompt = els.prompt.value.trim();
         const model = els.model.value;
         const speedTier = els.speedSelect.value;
-        
-        // Settings
         const width = parseInt(els.width.value);
         const height = parseInt(els.height.value);
         const steps = parseInt(els.steps.value);
@@ -734,7 +758,7 @@
 
             checkCreditReset();
             if (STATE.credits < cost) {
-                alert(`❌ Not enough credits! You need ${cost}. Try a slower speed or wait for refill.`);
+                alert(`❌ Not enough credits! You need ${cost}.`);
                 return;
             }
         }
@@ -754,7 +778,7 @@
             : "Generating PRO (Free)...";
 
         try {
-            // Deduct Credits Immediately
+            // Deduct Generation Cost
             if (model === 'default') {
                 STATE.credits -= cost;
                 saveState();
@@ -781,20 +805,26 @@
             }
 
             resultBlob = await fetchImageAsBlob(imgData);
-            STATE.currentRawBlob = resultBlob; // Store clean version
+            
+            // Convert to Base64 (Clean)
+            const reader = new FileReader();
+            const cleanBase64 = await new Promise(r => {
+                reader.readAsDataURL(resultBlob);
+                reader.onloadend = () => r(reader.result);
+            });
+            STATE.currentCleanBase64 = cleanBase64;
 
             // --- DELAY LOGIC (Default Model Only) ---
             if (model === 'default' && speedTier !== 'default') {
                 els.statusText.textContent = "Receiving...";
                 els.waitTimer.style.display = 'block';
                 
-                // Hide Bubble? Prompt says: "shows the text instead of the bubble"
+                // Hide Bubble visually as requested
                 const blobElem = els.loader.querySelector('.blob');
                 blobElem.style.display = 'none';
 
-                let waitTime = (speedTier === 'slower') ? 100 : 300; // seconds
+                let waitTime = (speedTier === 'slower') ? 100 : 300; 
                 
-                // Timer Countdown
                 await new Promise(resolve => {
                     let counter = waitTime;
                     els.waitTimer.textContent = `${counter}s remaining...`;
@@ -805,44 +835,36 @@
                             clearInterval(timer);
                             resolve();
                         }
-                    }, 1000); // 1 sec interval
+                    }, 1000); 
                 });
-                
-                // Restore Bubble display for next time
                 blobElem.style.display = 'block';
             }
 
-            // --- WATERMARK PROCESSING ---
+            // --- DISPLAY & WATERMARK ---
             let displayUrl;
-            let historyBase64;
-
+            
             if (model === 'default') {
-                // Create watermarked version for display
-                const watermarkedBase64 = await addWatermark(resultBlob);
+                // Generate watermark for display
+                const watermarkedBase64 = await addWatermark(cleanBase64);
                 displayUrl = watermarkedBase64;
-                historyBase64 = watermarkedBase64;
+                els.img.src = displayUrl;
             } else {
-                // PRO: No watermark
-                displayUrl = URL.createObjectURL(resultBlob);
-                // Convert to base64 for history
-                const reader = new FileReader();
-                historyBase64 = await new Promise(r => {
-                    reader.readAsDataURL(resultBlob);
-                    reader.onloadend = () => r(reader.result);
-                });
+                // PRO
+                displayUrl = cleanBase64;
+                els.img.src = displayUrl;
             }
 
-            // Show Result
-            els.img.src = displayUrl;
             els.loader.style.display = 'none';
             els.img.style.display = 'block';
             els.statusText.textContent = "Done!";
 
-            // Add to History
-            addToHistory(historyBase64, model);
+            // Save Clean version to history. 
+            // We store the CLEAN version in history so we can watermark it on demand 
+            // or strip it on demand later.
+            addToHistory(cleanBase64, model);
 
             // Click Logic
-            els.img.onclick = () => handleDownloadClick(model);
+            els.img.onclick = () => handleDownloadLogic(STATE.currentCleanBase64, model);
 
         } catch (error) {
             console.error(error);
@@ -856,30 +878,31 @@
     });
 
     // --- WATERMARK SYSTEM ---
-    async function addWatermark(blob) {
+    async function addWatermark(base64Image) {
         return new Promise((resolve) => {
             const img = new Image();
-            img.src = URL.createObjectURL(blob);
+            img.src = base64Image;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 
-                // Draw Image
+                // Draw Original
                 ctx.drawImage(img, 0, 0);
 
-                // Draw Watermark
-                ctx.font = `${Math.max(20, img.width/20)}px sans-serif`;
+                // Draw Watermark (Smaller Size)
+                // Was img.width/20, now img.width/40 for 50% smaller
+                const fontSize = Math.max(12, img.width / 40); 
+                ctx.font = `${fontSize}px sans-serif`;
                 ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
                 ctx.textAlign = "right";
                 ctx.textBaseline = "bottom";
                 
-                // Multi-line text
                 const lines = ["ultra-img", ".vercel.app"];
-                const lineHeight = Math.max(24, img.width/18);
-                const x = canvas.width - 20;
-                let y = canvas.height - 20 - (lineHeight * (lines.length - 1));
+                const lineHeight = fontSize * 1.2;
+                const x = canvas.width - 15;
+                let y = canvas.height - 15 - (lineHeight * (lines.length - 1));
 
                 lines.forEach((line, i) => {
                     ctx.fillText(line, x, y + (i * lineHeight));
@@ -890,40 +913,25 @@
         });
     }
 
-    async function handleDownloadClick(model) {
+    // --- DOWNLOAD & CLICK LOGIC ---
+    async function handleDownloadLogic(cleanBase64, model) {
         if (model === 'pro') {
-            // Direct download
-            const a = document.createElement('a');
-            a.href = els.img.src;
-            a.download = `creeper-pro-${Date.now()}.png`;
-            a.click();
+            // PRO = Direct Download (Clean)
+            downloadBase64(cleanBase64, `creeper-pro-${Date.now()}.png`);
         } else {
-            // Default Model Logic
-            const choice = confirm("Download Options:\n\n[OK] Download with Watermark (Free)\n[Cancel] Remove Watermark (Cost: 10 Credits)");
-            
-            if (choice) {
-                // YES -> Watermarked (Free)
-                const a = document.createElement('a');
-                a.href = els.img.src; // This source is already watermarked
-                a.download = `creeper-wm-${Date.now()}.png`;
-                a.click();
+            // Default = Ask to Pay
+            const confirmMsg = "Do you want to download with watermark?\n\n[OK] Yes (Free)\n[Cancel] No, remove watermark (10 Credits)";
+            if (confirm(confirmMsg)) {
+                // User pressed OK -> Download Watermarked (Free)
+                const wmBase64 = await addWatermark(cleanBase64);
+                downloadBase64(wmBase64, `creeper-wm-${Date.now()}.png`);
             } else {
-                // NO -> Remove Watermark (Pay)
+                // User pressed Cancel -> Wants to remove WM (Pay)
                 if (STATE.credits >= 10) {
                     STATE.credits -= 10;
                     saveState();
                     updateUI();
-
-                    // Clean download using stored raw blob
-                    if (STATE.currentRawBlob) {
-                        const url = URL.createObjectURL(STATE.currentRawBlob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `creeper-clean-${Date.now()}.png`;
-                        a.click();
-                    } else {
-                        alert("Error: Original image lost. Please regenerate.");
-                    }
+                    downloadBase64(cleanBase64, `creeper-clean-${Date.now()}.png`);
                 } else {
                     alert("❌ Not enough credits (10 required) to remove watermark.");
                 }
@@ -931,7 +939,16 @@
         }
     }
 
-    // --- HELPERS ---
+    function downloadBase64(base64, filename) {
+        const a = document.createElement('a');
+        a.href = base64;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // --- HELPER FUNCTIONS ---
     async function fetchImageAsBlob(imageRef) {
         let url = "";
         if (typeof imageRef === "string") url = imageRef;
@@ -941,8 +958,9 @@
         return await response.blob();
     }
 
-    function addToHistory(base64, model) {
-        STATE.history.unshift({ image: base64, model: model, date: Date.now() });
+    // --- HISTORY SYSTEM ---
+    function addToHistory(cleanBase64, model) {
+        STATE.history.unshift({ image: cleanBase64, model: model, date: Date.now() });
         if (STATE.history.length > 3) STATE.history = STATE.history.slice(0, 3);
         saveState();
         renderHistory();
@@ -955,23 +973,29 @@
             grid.innerHTML = '<p style="color:#666; grid-column: 1/-1; text-align: center;">No history yet.</p>';
             return;
         }
-        STATE.history.forEach((item, index) => {
+        
+        STATE.history.forEach(async (item, index) => {
             const div = document.createElement('div');
             div.className = 'history-item';
+            
             const img = document.createElement('img');
-            img.src = item.image; // This is watermarked for Default
+            
+            // VISUAL LOGIC:
+            // If model is default, we MUST show watermark in the thumbnail.
+            // Since we stored the Clean version, we generate WM on the fly for display.
+            if (item.model === 'default') {
+                img.src = await addWatermark(item.image); 
+            } else {
+                img.src = item.image;
+            }
+
             const badge = document.createElement('div');
             badge.className = 'history-badge';
             badge.style.background = item.model === 'default' ? 'var(--primary)' : '#3b82f6';
             badge.textContent = item.model === 'default' ? 'DEF' : 'PRO';
 
-            // Click history logic: strictly downloads what is saved (watermarked for Default)
-            div.onclick = () => {
-                const a = document.createElement('a');
-                a.href = item.image;
-                a.download = `history-${index}.png`;
-                a.click();
-            };
+            // Click triggers exact same logic as main image
+            div.onclick = () => handleDownloadLogic(item.image, item.model);
 
             div.appendChild(img);
             div.appendChild(badge);
@@ -993,7 +1017,7 @@
         if (e.target == els.updatesModal) toggleModal(els.updatesModal, false);
     };
 
-    // --- CONFETTI FX (Simple Implementation) ---
+    // --- CONFETTI FX ---
     function startConfetti() {
         const canvas = els.confettiCanvas;
         const ctx = canvas.getContext('2d');
