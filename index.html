@@ -34,6 +34,7 @@
         flex-direction: column;
         align-items: center;
         padding: 20px;
+        overflow-x: hidden;
     }
 
     /* --- Header & Navigation --- */
@@ -57,15 +58,28 @@
         -webkit-text-fill-color: transparent;
         animation: shine 5s linear infinite;
         text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        transition: 0.3s;
+    }
+
+    /* Happy Hour Title Effect */
+    h1.happy-hour {
+        background: linear-gradient(90deg, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: rainbowMove 2s linear infinite, wiggle 1s ease-in-out infinite;
     }
 
     @keyframes shine { to { background-position: 200% center; } }
+    @keyframes rainbowMove { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
+    @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
 
     .nav-bar {
         width: 100%;
         display: flex;
         justify-content: flex-end;
         gap: 10px;
+        flex-wrap: wrap;
     }
 
     .nav-btn {
@@ -93,6 +107,8 @@
         border-radius: 12px;
         border: 1px solid var(--border);
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
     }
 
     .credit-info {
@@ -119,6 +135,16 @@
         box-shadow: 0 0 10px var(--primary);
     }
 
+    /* Confetti Canvas (Overlay) */
+    #confetti-canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 999;
+        display: none;
+    }
+
     /* --- Main UI --- */
     .container {
         width: 100%;
@@ -133,6 +159,9 @@
     /* Inputs */
     .model-selector {
         margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
     }
     
     label {
@@ -172,6 +201,15 @@
         margin-bottom: 20px;
     }
 
+    /* Speed Selector (Only visible for Default) */
+    #speedControl {
+        display: block;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid var(--primary);
+        padding: 10px;
+        border-radius: 8px;
+    }
+
     /* --- Generate Button with Burst Effect --- */
     #generateBtn {
         width: 100%;
@@ -207,7 +245,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        min-height: 350px; /* Increased height for bigger bubble */
+        min-height: 350px; 
         background: rgba(0,0,0,0.2);
         border-radius: 12px;
         overflow: hidden;
@@ -228,21 +266,16 @@
 
     /* --- THE MEGA BUBBLE LOADER --- */
     .loader-wrapper {
-        display: none; /* Flex when active */
+        display: none; 
         flex-direction: column;
         align-items: center;
         gap: 30px;
     }
 
     .blob {
-        /* Size: 1.5x larger than before (~180px) */
         width: 180px;
         height: 180px;
-        
-        /* Shape: Morphing Border Radius (Liquid) */
         border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-        
-        /* Silver Diagonal Strips Overlay */
         background-image: repeating-linear-gradient(
             45deg,
             transparent,
@@ -250,41 +283,30 @@
             rgba(255, 255, 255, 0.3) 15px,
             rgba(255, 255, 255, 0.3) 30px
         );
-        background-size: 200% 200%; /* Allows strip movement */
-
-        /* Base Color (Animated via background-color keyframes below) */
+        background-size: 200% 200%;
         background-color: #9333ea; 
-
-        /* Animations */
         animation: 
-            morph 8s ease-in-out infinite,      /* Shape changing */
-            colorCycle 40s linear infinite,     /* 10s per color x 4 colors */
-            stripMove 2s linear infinite;       /* Strips moving constantly */
-
+            morph 8s ease-in-out infinite,
+            colorCycle 40s linear infinite,
+            stripMove 2s linear infinite;
         box-shadow: inset 0 0 20px rgba(255,255,255,0.3), 0 0 30px rgba(0,0,0,0.5);
         backdrop-filter: blur(5px);
     }
 
-    /* 1. Shape Morphing (Extended range for "approx 2cm" feel) */
     @keyframes morph {
         0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-        50% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: scale(1.1); } /* Breath/Stretch */
+        50% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: scale(1.1); }
         100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
     }
 
-    /* 2. Color Cycle: Purple -> Red -> Blue -> Green (10s each) */
     @keyframes colorCycle {
-        0%, 100% { background-color: #9333ea; box-shadow: 0 0 30px #9333ea; } /* Purple */
-        25% { background-color: #ef4444; box-shadow: 0 0 30px #ef4444; } /* Red */
-        50% { background-color: #3b82f6; box-shadow: 0 0 30px #3b82f6; } /* Blue */
-        75% { background-color: #22c55e; box-shadow: 0 0 30px #22c55e; } /* Green */
+        0%, 100% { background-color: #9333ea; box-shadow: 0 0 30px #9333ea; }
+        25% { background-color: #ef4444; box-shadow: 0 0 30px #ef4444; }
+        50% { background-color: #3b82f6; box-shadow: 0 0 30px #3b82f6; }
+        75% { background-color: #22c55e; box-shadow: 0 0 30px #22c55e; }
     }
 
-    /* 3. Silver Strip Movement */
-    @keyframes stripMove {
-        0% { background-position: 0% 0%; }
-        100% { background-position: 100% 0%; }
-    }
+    @keyframes stripMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 0%; } }
 
     .status-text {
         font-size: 1rem;
@@ -294,12 +316,14 @@
         letter-spacing: 1px;
         animation: pulse 1.5s infinite;
     }
+    
+    #waitTimer { font-size: 0.8rem; color: #888; display:none; margin-top: 5px; }
 
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
     #placeholderText { color: #555; font-style: italic; position: absolute; z-index: 0; }
 
-    /* --- Modals (History & Tips) --- */
+    /* --- Modals (History, Tips, Updates) --- */
     .modal {
         display: none;
         position: fixed;
@@ -364,11 +388,7 @@
 
     .history-item:hover { border-color: var(--primary); transform: scale(1.02); }
 
-    .history-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+    .history-item img { width: 100%; height: 100%; object-fit: cover; }
 
     .history-badge {
         position: absolute;
@@ -384,29 +404,29 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* Tips List */
-    .tips-list {
-        list-style: none;
-        padding: 0;
-    }
-    .tips-list li {
+    /* Lists */
+    .info-list { list-style: none; padding: 0; }
+    .info-list li {
         margin-bottom: 15px;
         background: rgba(255,255,255,0.05);
         padding: 12px;
         border-radius: 8px;
         border-left: 3px solid var(--primary);
     }
-    .tips-list strong { color: var(--primary); }
+    .info-list strong { color: var(--primary); }
 
     .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
+    <canvas id="confetti-canvas"></canvas>
+
     <header>
-        <h1>Creeper Image Gen</h1>
+        <h1 id="appTitle">Creeper Image Gen</h1>
         <div class="nav-bar">
             <button class="nav-btn" id="tipsBtn">Tips 💡</button>
+            <button class="nav-btn" id="updatesBtn">Updates 🆕</button>
             <button class="nav-btn" id="historyBtn">History 📂</button>
         </div>
     </header>
@@ -414,24 +434,35 @@
     <div class="credit-system">
         <div class="credit-info">
             <span>Credits Available</span>
-            <span id="creditCount">-- / 10</span>
+            <span id="creditCount">-- / 100</span>
         </div>
         <div class="progress-track">
             <div id="creditBar" class="progress-bar"></div>
         </div>
-        <div style="font-size: 0.75rem; color: #888; margin-top: 8px; text-align: right;">
-            Refills to 10 at the start of every hour (XX:00)
+        <div id="refillText" style="font-size: 0.75rem; color: #888; margin-top: 8px; text-align: right;">
+            Refills to Max at the start of every hour (XX:00)
         </div>
     </div>
 
     <div class="container">
         
         <div class="model-selector">
-            <label for="modelSelect">Select Model</label>
-            <select id="modelSelect">
-                <option value="default">Default (Costs 1 Credit) - CryptoCreeper/image-pro</option>
-                <option value="pro">PRO (Free / Rate Limited) - Z-Image-Turbo</option>
-            </select>
+            <div>
+                <label for="modelSelect">Select Model</label>
+                <select id="modelSelect">
+                    <option value="default">Default (Costs Credits) - CryptoCreeper/image-pro</option>
+                    <option value="pro">PRO (Free / No Watermark) - Z-Image-Turbo</option>
+                </select>
+            </div>
+
+            <div id="speedControl">
+                <label for="speedSelect">Default Model Speed & Cost</label>
+                <select id="speedSelect">
+                    <option value="default">Standard Speed (10 Credits) - Instant View</option>
+                    <option value="slower">Slower (5 Credits) - 100s Wait</option>
+                    <option value="slowest">Slowest (2 Credits) - 300s Wait</option>
+                </select>
+            </div>
         </div>
 
         <label for="prompt">Prompt</label>
@@ -472,6 +503,7 @@
             <div id="loader" class="loader-wrapper">
                 <div class="blob"></div>
                 <div id="statusText" class="status-text">Generating...</div>
+                <div id="waitTimer">Receiving in...</div>
             </div>
 
             <p id="placeholderText">Image will appear here</p>
@@ -497,26 +529,43 @@
                 <h3>Generation Tips</h3>
                 <button class="close-modal" id="closeTips">&times;</button>
             </div>
-            <ul class="tips-list">
-                <li><strong>1. Speed Optimization:</strong> The lower the resolution and steps, the faster the image will be generated. Start small (512x512) to test your prompt!</li>
-                <li><strong>2. Model Choice:</strong> The <strong>PRO</strong> model is very fast and professional. It is perfect for higher resolutions (1024px) and more steps.</li>
+            <ul class="info-list">
+                <li><strong>1. Speed Optimization:</strong> The lower the resolution and steps, the faster the image will be generated. Start small (512x512).</li>
+                <li><strong>2. Model Choice:</strong> PRO is free and fast but rate-limited. Default has high quality but costs credits.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="updatesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Latest Updates</h3>
+                <button class="close-modal" id="closeUpdates">&times;</button>
+            </div>
+            <ul class="info-list">
+                <li><strong>1. Dynamic Credit & Happy Hour:</strong> Max credits now change by day (Fri: 110, Sat: 120, Sun: 130). <strong>Happy Hour</strong> is Sunday 17:00-19:00 (Max 150 + FX)!</li>
+                <li><strong>2. Economy 2.0:</strong> Default model costs 10 credits. Paid option to remove watermarks for 10 credits.</li>
+                <li><strong>3. Flexible Pricing:</strong> Choose 'Slower' (5 credits) or 'Slowest' (2 credits) speeds to save money!</li>
             </ul>
         </div>
     </div>
 
 <script type="module">
-    // --- IMPORT GRADIO ---
     import { Client } from "https://esm.sh/@gradio/client";
 
     // --- STATE MANAGEMENT ---
     const STATE = {
-        credits: 5,
+        credits: 100,
+        maxCredits: 100,
         history: [], 
-        lastVisit: Date.now()
+        lastVisit: Date.now(),
+        // Holds the raw blob of the CURRENT generated image (clean version)
+        currentRawBlob: null
     };
 
     // --- DOM ELEMENTS ---
     const els = {
+        appTitle: document.getElementById('appTitle'),
         creditCount: document.getElementById('creditCount'),
         creditBar: document.getElementById('creditBar'),
         prompt: document.getElementById('prompt'),
@@ -524,238 +573,379 @@
         height: document.getElementById('height'),
         steps: document.getElementById('steps'),
         model: document.getElementById('modelSelect'),
+        speedControl: document.getElementById('speedControl'),
+        speedSelect: document.getElementById('speedSelect'),
         btn: document.getElementById('generateBtn'),
         resultContainer: document.querySelector('.result-container'),
         img: document.getElementById('resultImg'),
         placeholder: document.getElementById('placeholderText'),
         loader: document.getElementById('loader'),
         statusText: document.getElementById('statusText'),
+        waitTimer: document.getElementById('waitTimer'),
+        refillText: document.getElementById('refillText'),
+        confettiCanvas: document.getElementById('confetti-canvas'),
         
         // Modals
         historyBtn: document.getElementById('historyBtn'),
         historyModal: document.getElementById('historyModal'),
         closeHistory: document.getElementById('closeHistory'),
         historyGrid: document.getElementById('historyGrid'),
-        
         tipsBtn: document.getElementById('tipsBtn'),
         tipsModal: document.getElementById('tipsModal'),
-        closeTips: document.getElementById('closeTips')
+        closeTips: document.getElementById('closeTips'),
+        updatesBtn: document.getElementById('updatesBtn'),
+        updatesModal: document.getElementById('updatesModal'),
+        closeUpdates: document.getElementById('closeUpdates')
     };
 
     // --- INITIALIZATION ---
     function init() {
+        calculateMaxCredits(); // Set initial max based on day/time
         loadState();
-        checkCreditReset(); // Check immediately on load
+        checkCreditReset();
         updateUI();
         renderHistory();
 
-        // Periodic check in case user keeps tab open across the hour mark
+        // UI Event Listeners
+        els.model.addEventListener('change', toggleSpeedControl);
+        toggleSpeedControl(); // Run on init
+
+        // Periodic Checks
         setInterval(checkCreditReset, 5000); 
+        setInterval(checkHappyHourEffects, 60000); // Check effects every minute
+        checkHappyHourEffects(); // Run immediately
     }
 
-    // --- LOCAL STORAGE LOGIC ---
+    // --- LOGIC: DATE & CREDITS ---
+    function calculateMaxCredits() {
+        const now = new Date();
+        const day = now.getDay(); // 0=Sun, 5=Fri, 6=Sat
+        const hour = now.getHours();
+
+        // Default
+        let max = 100;
+
+        // Days
+        if (day === 5) max = 110; // Fri
+        if (day === 6) max = 120; // Sat
+        if (day === 0) max = 130; // Sun Normal
+
+        // Happy Hour: Sunday 17:00 to 18:59
+        if (day === 0 && hour >= 17 && hour < 19) {
+            max = 150;
+        }
+
+        STATE.maxCredits = max;
+        
+        // Handle Sunday Snap-back at 19:00
+        // If it's Sunday 19:xx and credits > 130, we don't force reduce them immediately per logic,
+        // but max snaps back to 130.
+    }
+
+    function checkHappyHourEffects() {
+        calculateMaxCredits();
+        const now = new Date();
+        const isHappyHour = (now.getDay() === 0 && now.getHours() >= 17 && now.getHours() < 19);
+
+        if (isHappyHour) {
+            els.appTitle.classList.add('happy-hour');
+            els.confettiCanvas.style.display = 'block';
+            startConfetti();
+        } else {
+            els.appTitle.classList.remove('happy-hour');
+            els.confettiCanvas.style.display = 'none';
+        }
+    }
+
+    function checkCreditReset() {
+        calculateMaxCredits();
+        const now = new Date();
+        const currentHourToken = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+        const lastRefillToken = localStorage.getItem('creeper_last_refill');
+
+        if (lastRefillToken !== currentHourToken) {
+            console.log("New hour! Refilling to max: " + STATE.maxCredits);
+            STATE.credits = STATE.maxCredits;
+            localStorage.setItem('creeper_last_refill', currentHourToken);
+            saveState();
+            updateUI();
+        }
+    }
+
+    // --- LOCAL STORAGE ---
     function loadState() {
         const savedCredits = localStorage.getItem('creeper_credits');
         if (savedCredits !== null) STATE.credits = parseInt(savedCredits);
 
         const savedHistory = localStorage.getItem('creeper_history');
         if (savedHistory) STATE.history = JSON.parse(savedHistory);
-
-        const savedSettings = localStorage.getItem('creeper_settings');
-        if (savedSettings) {
-            const parsed = JSON.parse(savedSettings);
-            els.prompt.value = parsed.prompt || "";
-            els.width.value = parsed.width || "512";
-            els.height.value = parsed.height || "512";
-            els.steps.value = parsed.steps || 5;
-            els.model.value = parsed.model || "default";
-        }
+        
+        // Ensure credits don't exceed max on load (optional, but good practice, unless it's bonus overflow)
+        // logic says refill happens at XX:00, so valid credits stick.
     }
 
     function saveState() {
         localStorage.setItem('creeper_credits', STATE.credits);
         localStorage.setItem('creeper_history', JSON.stringify(STATE.history));
-        
-        const currentSettings = {
-            prompt: els.prompt.value,
-            width: els.width.value,
-            height: els.height.value,
-            steps: els.steps.value,
-            model: els.model.value
-        };
-        localStorage.setItem('creeper_settings', JSON.stringify(currentSettings));
     }
 
-    // --- CREDIT & TIME LOGIC ---
-    function checkCreditReset() {
-        const now = new Date();
-        // Generate a token for the current hour: "2023-10-27-14" (Year-Month-Day-Hour)
-        const currentHourToken = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
-        const lastRefillToken = localStorage.getItem('creeper_last_refill');
-
-        // If the token in storage is different from current hour, it means we are in a new hour
-        if (lastRefillToken !== currentHourToken) {
-            console.log("New hour detected! Refilling credits.");
-            STATE.credits = 10;
-            localStorage.setItem('creeper_last_refill', currentHourToken);
-            saveState();
-            updateUI();
-        }
-        
-        // Update last visit just for housekeeping
-        STATE.lastVisit = Date.now();
-    }
-
+    // --- UI UPDATES ---
     function updateUI() {
-        // Update Credits
-        els.creditCount.textContent = `${STATE.credits} / 10`;
-        const percentage = (STATE.credits / 10) * 100;
+        els.creditCount.textContent = `${STATE.credits} / ${STATE.maxCredits}`;
+        // Calculate percentage relative to current Max
+        let percentage = (STATE.credits / STATE.maxCredits) * 100;
+        if (percentage > 100) percentage = 100;
+        
         els.creditBar.style.width = `${percentage}%`;
+        els.refillText.textContent = `Max Capacity: ${STATE.maxCredits} | Refills at XX:00`;
 
-        // Color Logic
-        if (STATE.credits > 6) els.creditBar.style.background = "var(--primary)";
-        else if (STATE.credits > 3) els.creditBar.style.background = "#fbbf24"; // Yellow
-        else els.creditBar.style.background = "#ef4444"; // Red
+        if (STATE.credits > (STATE.maxCredits * 0.6)) els.creditBar.style.background = "var(--primary)";
+        else if (STATE.credits > (STATE.maxCredits * 0.3)) els.creditBar.style.background = "#fbbf24";
+        else els.creditBar.style.background = "#ef4444";
+    }
+
+    function toggleSpeedControl() {
+        if (els.model.value === 'default') {
+            els.speedControl.classList.remove('hidden');
+        } else {
+            els.speedControl.classList.add('hidden');
+        }
     }
 
     // --- GENERATION LOGIC ---
     els.btn.addEventListener('click', async () => {
-        // Save inputs immediately
-        saveState();
-
         const prompt = els.prompt.value.trim();
+        const model = els.model.value;
+        const speedTier = els.speedSelect.value;
+        
+        // Settings
         const width = parseInt(els.width.value);
         const height = parseInt(els.height.value);
         const steps = parseInt(els.steps.value);
-        const model = els.model.value;
 
-        if (!prompt) {
-            alert("⚠️ Please enter a prompt.");
-            return;
-        }
+        if (!prompt) { alert("⚠️ Please enter a prompt."); return; }
 
-        // Check Credits for Default Model
+        // --- COST LOGIC ---
+        let cost = 0;
         if (model === 'default') {
-            checkCreditReset(); // Double check before deducting
-            if (STATE.credits < 1) {
-                alert("❌ Not enough credits! Wait for the start of the next hour.");
+            if (speedTier === 'default') cost = 10;
+            if (speedTier === 'slower') cost = 5;
+            if (speedTier === 'slowest') cost = 2;
+
+            checkCreditReset();
+            if (STATE.credits < cost) {
+                alert(`❌ Not enough credits! You need ${cost}. Try a slower speed or wait for refill.`);
                 return;
             }
         }
 
-        // --- TRIGGER BUTTON ANIMATION (PURPLE FLUID BURST) ---
+        // --- UI ANIMATION ---
         els.btn.classList.add('burst-mode');
-        setTimeout(() => {
-            els.btn.classList.remove('burst-mode');
-        }, 3000); // Stays purple for exactly 3 seconds
+        setTimeout(() => els.btn.classList.remove('burst-mode'), 3000);
 
-        // Start UI State
         els.btn.disabled = true;
         els.img.style.display = 'none';
-        els.placeholder.style.display = 'none'; // Hide text under bubble
-        els.loader.style.display = 'flex'; // Show Bubble
+        els.placeholder.style.display = 'none';
+        els.loader.style.display = 'flex';
+        els.waitTimer.style.display = 'none';
+        
         els.statusText.textContent = model === 'default' 
-            ? "Generating with Default (Cost: 1 Credit)..." 
-            : "Generating with PRO (Free)...";
+            ? `Generating (Cost: ${cost})...` 
+            : "Generating PRO (Free)...";
 
         try {
-            let resultBlob = null;
-
+            // Deduct Credits Immediately
             if (model === 'default') {
-                // Deduct Credit
-                STATE.credits -= 1;
+                STATE.credits -= cost;
                 saveState();
                 updateUI();
-
-                const client = await Client.connect("CryptoCreeper/image-pro");
-                const result = await client.predict("/generate_workflow", {
-                    prompt: prompt,
-                    width: width,
-                    height: height,
-                    steps: steps
-                });
-                const imgData = result.data[1];
-                resultBlob = await fetchImageAsBlob(imgData);
-
-            } else {
-                // PRO Model
-                const client = await Client.connect("mrfakename/Z-Image-Turbo");
-                const result = await client.predict("/generate_image", {
-                    prompt: prompt,
-                    width: width,
-                    height: height,
-                    num_inference_steps: steps,
-                    seed: Math.floor(Math.random() * 100000),
-                    randomize_seed: true
-                });
-                const imgData = result.data[0]; 
-                resultBlob = await fetchImageAsBlob(imgData);
             }
 
-            // Success Handling
-            const objectURL = URL.createObjectURL(resultBlob);
-            els.img.src = objectURL;
-            
-            // UI Switch: Hide Bubble, Show Image
+            let resultBlob = null;
+            let imgData = null;
+
+            // --- API CALL ---
+            if (model === 'default') {
+                const client = await Client.connect("CryptoCreeper/image-pro");
+                const result = await client.predict("/generate_workflow", {
+                    prompt: prompt, width: width, height: height, steps: steps
+                });
+                imgData = result.data[1];
+            } else {
+                const client = await Client.connect("mrfakename/Z-Image-Turbo");
+                const result = await client.predict("/generate_image", {
+                    prompt: prompt, width: width, height: height, num_inference_steps: steps,
+                    seed: Math.floor(Math.random() * 100000), randomize_seed: true
+                });
+                imgData = result.data[0];
+            }
+
+            resultBlob = await fetchImageAsBlob(imgData);
+            STATE.currentRawBlob = resultBlob; // Store clean version
+
+            // --- DELAY LOGIC (Default Model Only) ---
+            if (model === 'default' && speedTier !== 'default') {
+                els.statusText.textContent = "Receiving...";
+                els.waitTimer.style.display = 'block';
+                
+                // Hide Bubble? Prompt says: "shows the text instead of the bubble"
+                const blobElem = els.loader.querySelector('.blob');
+                blobElem.style.display = 'none';
+
+                let waitTime = (speedTier === 'slower') ? 100 : 300; // seconds
+                
+                // Timer Countdown
+                await new Promise(resolve => {
+                    let counter = waitTime;
+                    els.waitTimer.textContent = `${counter}s remaining...`;
+                    const timer = setInterval(() => {
+                        counter--;
+                        els.waitTimer.textContent = `${counter}s remaining...`;
+                        if (counter <= 0) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 1000); // 1 sec interval
+                });
+                
+                // Restore Bubble display for next time
+                blobElem.style.display = 'block';
+            }
+
+            // --- WATERMARK PROCESSING ---
+            let displayUrl;
+            let historyBase64;
+
+            if (model === 'default') {
+                // Create watermarked version for display
+                const watermarkedBase64 = await addWatermark(resultBlob);
+                displayUrl = watermarkedBase64;
+                historyBase64 = watermarkedBase64;
+            } else {
+                // PRO: No watermark
+                displayUrl = URL.createObjectURL(resultBlob);
+                // Convert to base64 for history
+                const reader = new FileReader();
+                historyBase64 = await new Promise(r => {
+                    reader.readAsDataURL(resultBlob);
+                    reader.onloadend = () => r(reader.result);
+                });
+            }
+
+            // Show Result
+            els.img.src = displayUrl;
             els.loader.style.display = 'none';
             els.img.style.display = 'block';
+            els.statusText.textContent = "Done!";
 
-            // Save to History
-            const reader = new FileReader();
-            reader.readAsDataURL(resultBlob);
-            reader.onloadend = () => {
-                const base64data = reader.result;
-                addToHistory(base64data, model);
-            };
+            // Add to History
+            addToHistory(historyBase64, model);
 
-            // Setup Main Image Download
-            els.img.onclick = () => downloadImage(objectURL, `creeper-gen-${Date.now()}.png`);
+            // Click Logic
+            els.img.onclick = () => handleDownloadClick(model);
 
         } catch (error) {
             console.error(error);
-            els.loader.style.display = 'none'; // Hide Bubble
-            els.placeholder.style.display = 'block'; // Show text again
+            els.loader.style.display = 'none';
+            els.placeholder.style.display = 'block';
             els.placeholder.innerHTML = `<span style="color:#ef4444">❌ Error: ${error.message}</span>`;
-            
-            if (model === 'pro') {
-                alert("Sorry, you’ve reached your PRO limit for today. Try again tomorrow.");
-            }
+            if (model === 'pro') alert("PRO Limit Reached or Error.");
         } finally {
             els.btn.disabled = false;
         }
     });
 
-    // --- HELPER FUNCTIONS ---
+    // --- WATERMARK SYSTEM ---
+    async function addWatermark(blob) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(blob);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw Image
+                ctx.drawImage(img, 0, 0);
 
+                // Draw Watermark
+                ctx.font = `${Math.max(20, img.width/20)}px sans-serif`;
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.textAlign = "right";
+                ctx.textBaseline = "bottom";
+                
+                // Multi-line text
+                const lines = ["ultra-img", ".vercel.app"];
+                const lineHeight = Math.max(24, img.width/18);
+                const x = canvas.width - 20;
+                let y = canvas.height - 20 - (lineHeight * (lines.length - 1));
+
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, x, y + (i * lineHeight));
+                });
+
+                resolve(canvas.toDataURL('image/png'));
+            };
+        });
+    }
+
+    async function handleDownloadClick(model) {
+        if (model === 'pro') {
+            // Direct download
+            const a = document.createElement('a');
+            a.href = els.img.src;
+            a.download = `creeper-pro-${Date.now()}.png`;
+            a.click();
+        } else {
+            // Default Model Logic
+            const choice = confirm("Download Options:\n\n[OK] Download with Watermark (Free)\n[Cancel] Remove Watermark (Cost: 10 Credits)");
+            
+            if (choice) {
+                // YES -> Watermarked (Free)
+                const a = document.createElement('a');
+                a.href = els.img.src; // This source is already watermarked
+                a.download = `creeper-wm-${Date.now()}.png`;
+                a.click();
+            } else {
+                // NO -> Remove Watermark (Pay)
+                if (STATE.credits >= 10) {
+                    STATE.credits -= 10;
+                    saveState();
+                    updateUI();
+
+                    // Clean download using stored raw blob
+                    if (STATE.currentRawBlob) {
+                        const url = URL.createObjectURL(STATE.currentRawBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `creeper-clean-${Date.now()}.png`;
+                        a.click();
+                    } else {
+                        alert("Error: Original image lost. Please regenerate.");
+                    }
+                } else {
+                    alert("❌ Not enough credits (10 required) to remove watermark.");
+                }
+            }
+        }
+    }
+
+    // --- HELPERS ---
     async function fetchImageAsBlob(imageRef) {
         let url = "";
         if (typeof imageRef === "string") url = imageRef;
         else if (imageRef?.url) url = imageRef.url;
         else if (imageRef?.path) url = imageRef.path;
-        
         const response = await fetch(url);
         return await response.blob();
     }
 
     function addToHistory(base64, model) {
-        STATE.history.unshift({
-            image: base64,
-            model: model,
-            date: Date.now()
-        });
-        // Keep only last 3
+        STATE.history.unshift({ image: base64, model: model, date: Date.now() });
         if (STATE.history.length > 3) STATE.history = STATE.history.slice(0, 3);
         saveState();
         renderHistory();
-    }
-
-    function downloadImage(url, filename) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
     }
 
     function renderHistory() {
@@ -768,16 +958,20 @@
         STATE.history.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'history-item';
-            
             const img = document.createElement('img');
-            img.src = item.image;
-            
+            img.src = item.image; // This is watermarked for Default
             const badge = document.createElement('div');
             badge.className = 'history-badge';
             badge.style.background = item.model === 'default' ? 'var(--primary)' : '#3b82f6';
             badge.textContent = item.model === 'default' ? 'DEF' : 'PRO';
 
-            div.onclick = () => downloadImage(item.image, `history-${index}-${item.date}.png`);
+            // Click history logic: strictly downloads what is saved (watermarked for Default)
+            div.onclick = () => {
+                const a = document.createElement('a');
+                a.href = item.image;
+                a.download = `history-${index}.png`;
+                a.click();
+            };
 
             div.appendChild(img);
             div.appendChild(badge);
@@ -785,23 +979,55 @@
         });
     }
 
-    // --- MODAL LOGIC ---
+    // --- MODALS ---
     function toggleModal(modal, show) { modal.style.display = show ? "flex" : "none"; }
-    
     els.historyBtn.onclick = () => toggleModal(els.historyModal, true);
     els.closeHistory.onclick = () => toggleModal(els.historyModal, false);
-    
     els.tipsBtn.onclick = () => toggleModal(els.tipsModal, true);
     els.closeTips.onclick = () => toggleModal(els.tipsModal, false);
-
+    els.updatesBtn.onclick = () => toggleModal(els.updatesModal, true);
+    els.closeUpdates.onclick = () => toggleModal(els.updatesModal, false);
     window.onclick = (e) => {
         if (e.target == els.historyModal) toggleModal(els.historyModal, false);
         if (e.target == els.tipsModal) toggleModal(els.tipsModal, false);
+        if (e.target == els.updatesModal) toggleModal(els.updatesModal, false);
     };
 
-    // Run Init
-    init();
+    // --- CONFETTI FX (Simple Implementation) ---
+    function startConfetti() {
+        const canvas = els.confettiCanvas;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const pieces = [];
+        const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+        
+        for(let i=0; i<100; i++) {
+            pieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 5 + 5,
+                speed: Math.random() * 3 + 2
+            });
+        }
 
+        function draw() {
+            if (els.confettiCanvas.style.display === 'none') return;
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                p.y += p.speed;
+                if(p.y > canvas.height) p.y = -10;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    init();
 </script>
 </body>
 </html>
