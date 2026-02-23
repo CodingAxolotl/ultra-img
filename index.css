@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@theme {
+  --color-creeper: #22c55e;
+  --color-creeper-dark: #15803d;
+  --color-creeper-darker: #0a5c2a;
+  --color-creeper-light: #4ade80;
+  --color-creeper-glow: rgba(34, 197, 94, 0.3);
+  --color-cave: #0a0a0a;
+  --color-cave-light: #141414;
+  --color-cave-panel: #1a1a1a;
+  --color-ore-diamond: #4ee8e8;
+  --color-ore-emerald: #22c55e;
+  --color-ore-gold: #fbbf24;
+  --color-ore-redstone: #ef4444;
+  --color-ore-lapis: #3b82f6;
+  --color-burst-purple: #9333ea;
+  --color-burst-purple-dark: #7e22ce;
+  --color-nether-red: #b91c1c;
+  --color-nether-orange: #ea580c;
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+/* Pixel-perfect scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-creeper-dark);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-creeper);
+}
+
+/* Pixel border utility */
+.pixel-border {
+  box-shadow:
+    inset -2px -2px 0px 0px rgba(0,0,0,0.3),
+    inset 2px 2px 0px 0px rgba(255,255,255,0.1),
+    0 0 0 2px #333;
+}
+
+.pixel-border-green {
+  box-shadow:
+    inset -2px -2px 0px 0px rgba(0,0,0,0.3),
+    inset 2px 2px 0px 0px rgba(255,255,255,0.1),
+    0 0 0 2px var(--color-creeper-dark);
+}
+
+/* Minecraft-style button press */
+.mc-btn {
+  position: relative;
+  border: 2px solid #000;
+  box-shadow:
+    inset -2px -2px 0px 0px rgba(0,0,0,0.4),
+    inset 2px 2px 0px 0px rgba(255,255,255,0.15);
+  transition: all 0.05s;
+}
+.mc-btn:active {
+  box-shadow:
+    inset 2px 2px 0px 0px rgba(0,0,0,0.4),
+    inset -2px -2px 0px 0px rgba(255,255,255,0.15);
+  transform: translateY(1px);
+}
+
+/* Glow keyframes */
+@keyframes oreGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pixelFadeIn {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes creeperBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes glitchText {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+@keyframes stripMove {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 0%; }
+}
+
+@keyframes morph {
+  0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: scale(1.1); }
+  100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+}
+
+@keyframes colorCycle {
+  0%, 100% { background-color: #9333ea; box-shadow: 0 0 30px #9333ea; }
+  25% { background-color: #ef4444; box-shadow: 0 0 30px #ef4444; }
+  50% { background-color: #3b82f6; box-shadow: 0 0 30px #3b82f6; }
+  75% { background-color: #22c55e; box-shadow: 0 0 30px #22c55e; }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes rainbowMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes shine {
+  to { background-position: 200% center; }
+}
+
+@keyframes tntPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6), 0 0 60px rgba(239, 68, 68, 0.3); }
+}
+
+@keyframes explosionRing {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+/* Custom range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #333;
+  border-radius: 0;
+  outline: none;
+  border: none;
+  padding: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-creeper);
+  border: 2px solid #000;
+  cursor: pointer;
+  box-shadow: inset -1px -1px 0 rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-creeper);
+  border: 2px solid #000;
+  cursor: pointer;
+}
+
+/* Tooltips */
+.tooltip-wrapper {
+  position: relative;
+}
+.tooltip-wrapper .tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 100;
+  border: 1px solid #333;
+  transition: opacity 0.2s;
+  font-family: var(--font-body);
+}
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
